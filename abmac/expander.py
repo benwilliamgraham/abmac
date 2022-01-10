@@ -15,9 +15,16 @@ class MacroExpander(ast.NodeTransformer):
     def visit_Expr(self, node: ast.Expr) -> ast.Expr:
         """Expand a macro."""
         if isinstance(node.value, ast.Name) and node.value.id in self.macros:
-            return ast.parse(self.macros[node.value.id]).body
-        else:
-            return node
+            code = self.macros[node.value.id]
+            try:
+                tree = ast.parse(code)
+            except SyntaxError as err:
+                raise SyntaxError(
+                    f"Macro {node.value.id} is not a valid Python expression."
+                ) from err
+            ast.increment_lineno(tree, node.lineno - 1)
+            return tree.body
+        return node
 
 
 def expand(macros: dict[str, str]) -> FunctionType:

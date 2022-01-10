@@ -55,3 +55,23 @@ def lit_loop():
 def test_macro_funcs(macro_func, lit_func, args):
     """Test macro functions."""
     assert macro_func(*args) == lit_func(*args)
+
+
+@expand({"EXCEPT": "raise Exception('test')"})
+def err_runtime():
+    a = 10
+    EXCEPT
+    return a
+
+
+@pytest.mark.parametrize(
+    "macro_func,args,err",
+    [
+        (err_runtime, [], r"test"),
+    ],
+)
+def test_macro_funcs_err(macro_func, args, err):
+    """Test macro functions."""
+    with pytest.raises(Exception) as excinfo:
+        macro_func(*args)
+    assert str(excinfo.value) == err
